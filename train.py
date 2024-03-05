@@ -291,6 +291,7 @@ def run_inference(opt, unknown):
         trainer_kwargs = {
             key: val for key, val in trainer_kwargs.items() if key not in trainer_opt
         }
+        trainer_opt.pop("batch_size")
         trainer = Trainer(**trainer_opt, **trainer_kwargs)
 
         trainer.logdir = logdir  ###
