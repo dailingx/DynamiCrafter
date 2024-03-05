@@ -1,0 +1,156 @@
+model:
+  target: lvdm.models.ddpm3d.LatentVisualDiffusion
+  params:
+    rescale_betas_zero_snr: True
+    parameterization: "v"
+    linear_start: 0.00085
+    linear_end: 0.012
+    num_timesteps_cond: 1
+    timesteps: 1000
+    first_stage_key: video
+    cond_stage_key: caption
+    cond_stage_trainable: False
+    conditioning_key: hybrid
+    image_size: [72, 128]
+    channels: 4
+    scale_by_std: False
+    scale_factor: 0.18215
+    use_ema: False
+    uncond_type: 'empty_seq'
+    use_dynamic_rescale: true
+    base_scale: 0.3
+    fps_condition_type: 'fps'
+    perframe_ae: True
+    unet_config:
+      target: lvdm.modules.networks.openaimodel3d.UNetModel
+      params:
+        in_channels: 8
+        out_channels: 4
+        model_channels: 320
+        attention_resolutions:
+        - 4
+        - 2
+        - 1
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 4
+        - 4
+        dropout: 0.1
+        num_head_channels: 64
+        transformer_depth: 1
+        context_dim: 1024
+        use_linear: true
+        use_checkpoint: True
+        temporal_conv: True
+        temporal_attention: True
+        temporal_selfatt_only: true
+        use_relative_position: false
+        use_causal_attention: False
+        temporal_length: 16
+        addition_attention: true
+        image_cross_attention: true
+        default_fs: 10
+        fs_condition: true
+
+    first_stage_config:
+      target: lvdm.models.autoencoder.AutoencoderKL
+      params:
+        embed_dim: 4
+        monitor: val/rec_loss
+        ddconfig:
+          double_z: True
+          z_channels: 4
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+    cond_stage_config:
+      target: lvdm.modules.encoders.condition.FrozenOpenCLIPEmbedder
+      params:
+        freeze: true
+        layer: "penultimate"
+
+    img_cond_stage_config:
+      target: lvdm.modules.encoders.condition.FrozenOpenCLIPImageEmbedderV2
+      params:
+        freeze: true
+    
+    image_proj_stage_config:
+      target: lvdm.modules.encoders.resampler.Resampler
+      params:
+        dim: 1024
+        depth: 4
+        dim_head: 64
+        heads: 12
+        num_queries: 16
+        embedding_dim: 1280
+        output_dim: 1024
+        ff_mult: 4
+        video_length: 16
+
+data:
+  target: utils.dataset.DataModuleFromConfig
+  params:
+    batch_size: 1
+    num_workers: 0
+    wrap: false
+    train:
+      target: lvdm.data.taichi.Taichi
+      params:
+        data_root: ${data_root}
+        resolution: 256
+        video_length: 16
+        subset_split: all
+        frame_stride: 4
+    validation:
+      target: lvdm.data.taichi.Taichi
+      params:
+        data_root: ${data_root}
+        resolution: 256
+        video_length: 16
+        subset_split: test
+        frame_stride: 4
+
+
+lightning:
+  find_unused_parameters: True
+  callbacks:
+    image_logger:
+      target: utils.callbacks.ImageLogger
+      params:
+        batch_frequency: 300
+        max_images: 8
+        increase_log_steps: False
+        log_to_tblogger: False
+    metrics_over_trainsteps_checkpoint:
+      target: pytorch_lightning.callbacks.ModelCheckpoint
+      params:
+        filename: "{epoch:06}-{step:09}"
+        save_weights_only: False
+        every_n_epochs: 100
+        every_n_train_steps: null
+  trainer:
+    benchmark: True
+    accumulate_grad_batches: 2
+    batch_size: 1
+    num_workers: 0
+    max_epochs: 1000
+  modelcheckpoint:
+    target: pytorch_lightning.callbacks.ModelCheckpoint
+    params:
+      every_n_epochs: 1
+      filename: "{epoch:04}-{step:06}"
+
