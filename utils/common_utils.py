@@ -1,4 +1,5 @@
 import argparse
+import torch
 
 
 def str2bool(v):
@@ -10,3 +11,14 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def exists(x):
+    return x is not None
+
+
+def isheatmap(x):
+    if not isinstance(x, torch.Tensor):
+        return False
+
+    return x.ndim == 2

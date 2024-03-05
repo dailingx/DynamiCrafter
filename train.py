@@ -24,7 +24,6 @@ from pytorch_lightning.trainer import Trainer
 from pytorch_lightning.utilities import rank_zero_only
 
 from utils.utils import instantiate_from_config
-from utils.utils import exists, isheatmap
 from utils.common_utils import *
 
 MULTINODE_HACKS = True
