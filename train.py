@@ -38,6 +38,7 @@ def run_inference(opt, unknown):
         )
     melk_ckpt_name = None
     name = None
+    import os
     if opt.resume:
         if not os.path.exists(opt.resume):
             raise ValueError("Cannot find {}".format(opt.resume))
