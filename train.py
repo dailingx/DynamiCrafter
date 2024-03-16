@@ -303,8 +303,8 @@ def run_inference(opt, unknown):
         # NOTE according to https://pytorch-lightning.readthedocs.io/en/latest/datamodules.html
         # calling these ourselves should not be necessary but it is.
         # lightning still takes care of proper multiprocessing though
-        data.prepare_data()
-        # data.setup()
+        # data.prepare_data()
+        data.setup()
         print("#### Data #####")
         try:
             for k in data.datasets:
