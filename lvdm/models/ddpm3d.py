@@ -28,6 +28,7 @@ from lvdm.common import (
     exists,
     default
 )
+import random
 
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
@@ -688,6 +689,32 @@ class LatentVisualDiffusion(LatentDiffusion):
             self.embedder.train = disabled_train
             for param in self.embedder.parameters():
                 param.requires_grad = False
+
+    def training_step(self, batch, batch_idx):
+        loss, loss_dict = self.shared_step(batch, random_uncond=self.classifier_free_guidance)
+        ## sync_dist | rank_zero_only
+        self.log_dict(loss_dict, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=False)
+        #self.log("epoch/global_step", self.global_step.float(), prog_bar=True, logger=True, on_step=True, on_epoch=False)
+        '''
+        if self.use_scheduler:
+            lr = self.optimizers().param_groups[0]['lr']
+            self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False, rank_zero_only=True)
+        '''
+        if (batch_idx+1) % self.log_every_t == 0:
+            mainlogger.info(f"batch:{batch_idx}|epoch:{self.current_epoch} [globalstep:{self.global_step}]: loss={loss}")
+        return loss
+
+    def shared_step(self, batch, random_uncond, **kwargs):
+        is_imgbatch = False
+        if "loader_img" in batch.keys():
+            ratio = 10.0 / self.temporal_length
+            if random.uniform(0.,10.) < ratio:
+                is_imgbatch = True
+                batch = batch["loader_img"]
+            else:
+                batch = batch["loader_video"]
+        else:
+            pass
 
 
 class DiffusionWrapper(pl.LightningModule):
