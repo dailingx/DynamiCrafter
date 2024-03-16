@@ -716,6 +716,37 @@ class LatentVisualDiffusion(LatentDiffusion):
         else:
             pass
 
+    def configure_optimizers(self):
+        """ configure_optimizers for LatentDiffusion """
+        lr = self.learning_rate
+        if self.empty_params_only and hasattr(self, "empty_paras"):
+            params = [p for n, p in self.model.named_parameters() if n in self.empty_paras]
+            print('self.empty_paras', len(self.empty_paras))
+            for n, p in self.model.named_parameters():
+                if n not in self.empty_paras:
+                    p.requires_grad = False
+            mainlogger.info(f"@Training [{len(params)}] Empty Paramters ONLY.")
+        else:
+            params = list(self.model.parameters())
+            mainlogger.info(f"@Training [{len(params)}] Full Paramters.")
+
+        if self.learn_logvar:
+            mainlogger.info('Diffusion model optimizing logvar')
+            if isinstance(params[0], dict):
+                params.append({"params": [self.logvar]})
+            else:
+                params.append(self.logvar)
+
+        ## optimizer
+        optimizer = torch.optim.AdamW(params, lr=lr)
+        ## lr scheduler
+        if self.use_scheduler:
+            mainlogger.info("Setting up LambdaLR scheduler...")
+            lr_scheduler = self.configure_schedulers(optimizer)
+            return [optimizer], [lr_scheduler]
+
+        return optimizer
+
 
 class DiffusionWrapper(pl.LightningModule):
     def __init__(self, diff_model_config, conditioning_key):
