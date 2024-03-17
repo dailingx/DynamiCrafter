@@ -720,6 +720,47 @@ class LatentVisualDiffusion(LatentDiffusion):
         loss, loss_dict = self(x, c, is_imgbatch=is_imgbatch, **kwargs)
         return loss, loss_dict
 
+    @torch.no_grad()
+    def get_batch_input(self, batch, random_uncond, return_first_stage_outputs=False, return_original_cond=False,
+                        is_imgbatch=False):
+        ## image/video shape: b, c, t, h, w
+        data_key = 'jpg' if is_imgbatch else self.first_stage_key
+        x = super().get_input(batch, data_key)
+        if is_imgbatch:
+            ## pack image as video
+            # x = x[:,:,None,:,:]
+            b = x.shape[0] // self.temporal_length
+            x = rearrange(x, '(b t) c h w -> b c t h w', b=b, t=self.temporal_length)
+        x_ori = x
+        ## encode video frames x to z via a 2D encoder
+        z = self.encode_first_stage(x)
+
+        ## get caption condition
+        cond_key = 'txt' if is_imgbatch else self.cond_stage_key
+        cond = batch[cond_key]
+        if random_uncond and self.uncond_type == 'empty_seq':
+            for i, ci in enumerate(cond):
+                if random.random() < self.uncond_prob:
+                    cond[i] = ""
+        if isinstance(cond, dict) or isinstance(cond, list):
+            cond_emb = self.get_learned_conditioning(cond)
+        else:
+            cond_emb = self.get_learned_conditioning(cond.to(self.device))
+        if random_uncond and self.uncond_type == 'zero_embed':
+            for i, ci in enumerate(cond):
+                if random.random() < self.uncond_prob:
+                    cond_emb[i] = torch.zeros_like(ci)
+
+        out = [z, cond_emb]
+        ## optional output: self-reconst or caption
+        if return_first_stage_outputs:
+            xrec = self.decode_first_stage(z)
+            out.extend([x_ori, xrec])
+        if return_original_cond:
+            out.append(cond)
+
+        return out
+
     def configure_optimizers(self):
         """ configure_optimizers for LatentDiffusion """
         lr = self.learning_rate
