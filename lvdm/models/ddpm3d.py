@@ -708,13 +708,17 @@ class LatentVisualDiffusion(LatentDiffusion):
         is_imgbatch = False
         if "loader_img" in batch.keys():
             ratio = 10.0 / self.temporal_length
-            if random.uniform(0.,10.) < ratio:
+            if random.uniform(0., 10.) < ratio:
                 is_imgbatch = True
                 batch = batch["loader_img"]
             else:
                 batch = batch["loader_video"]
         else:
             pass
+
+        x, c = self.get_batch_input(batch, random_uncond=random_uncond, is_imgbatch=is_imgbatch)
+        loss, loss_dict = self(x, c, is_imgbatch=is_imgbatch, **kwargs)
+        return loss, loss_dict
 
     def configure_optimizers(self):
         """ configure_optimizers for LatentDiffusion """
