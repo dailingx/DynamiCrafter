@@ -75,7 +75,7 @@ class Taichi(Dataset):
         frames = torch.tensor(frames.asnumpy()).permute(3, 0, 1, 2).float() # [t,h,w,c] -> [c,t,h,w]
         assert(frames.shape[2] == self.resolution[0] and frames.shape[3] == self.resolution[1]), f'frames={frames.shape}, self.resolution={self.resolution}'
         frames = (frames / 255 - 0.5) * 2
-        data = {'video': frames}
+        data = {'video': frames, 'caption': 'test'}
         return data
     
     def __len__(self):
