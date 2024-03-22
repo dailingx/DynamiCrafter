@@ -675,6 +675,63 @@ class LatentDiffusion(DDPM):
             return img, intermediates
         return img
 
+    def p_losses(self, x_start, cond, t, noise=None, **kwargs):
+        noise = default(noise, lambda: torch.randn_like(x_start))
+        x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
+        if self.frame_cond:
+            if self.cond_mask.device is not self.device:
+                self.cond_mask = self.cond_mask.to(self.device)
+            ## condition on fist few frames
+            x_noisy = x_start * self.cond_mask + (1. - self.cond_mask) * x_noisy
+        model_output = self.apply_model(x_noisy, t, cond, **kwargs)
+
+        loss_dict = {}
+        prefix = 'train' if self.training else 'val'
+
+        if self.parameterization == "x0":
+            target = x_start
+        elif self.parameterization == "eps":
+            target = noise
+        else:
+            raise NotImplementedError()
+
+        if self.frame_cond:
+            ## [b,c,t,h,w]: only care about the predicted part (avoid disturbance)
+            model_output = model_output[:, :, self.frame_cond:, :, :]
+            target = target[:, :, self.frame_cond:, :, :]
+
+        loss_simple = self.get_loss(model_output, target, mean=False).mean([1, 2, 3, 4])
+
+        if torch.isnan(loss_simple).any():
+            print(f"loss_simple exists nan: {loss_simple}")
+            # import pdb; pdb.set_trace()
+            for i in range(loss_simple.shape[0]):
+                if torch.isnan(loss_simple[i]).any():
+                    loss_simple[i] = torch.zeros_like(loss_simple[i])
+
+        loss_dict.update({f'{prefix}/loss_simple': loss_simple.mean()})
+
+        if self.logvar.device is not self.device:
+            self.logvar = self.logvar.to(self.device)
+        logvar_t = self.logvar[t]
+        # logvar_t = self.logvar[t.item()].to(self.device) # device conflict when ddp shared
+        loss = loss_simple / torch.exp(logvar_t) + logvar_t
+        # loss = loss_simple / torch.exp(self.logvar) + self.logvar
+        if self.learn_logvar:
+            loss_dict.update({f'{prefix}/loss_gamma': loss.mean()})
+            loss_dict.update({'logvar': self.logvar.data.mean()})
+
+        loss = self.l_simple_weight * loss.mean()
+
+        if self.original_elbo_weight > 0:
+            loss_vlb = self.get_loss(model_output, target, mean=False).mean(dim=(1, 2, 3, 4))
+            loss_vlb = (self.lvlb_weights[t] * loss_vlb).mean()
+            loss_dict.update({f'{prefix}/loss_vlb': loss_vlb})
+            loss += (self.original_elbo_weight * loss_vlb)
+        loss_dict.update({f'{prefix}/loss': loss})
+
+        return loss, loss_dict
+
 
 class LatentVisualDiffusion(LatentDiffusion):
     def __init__(self, img_cond_stage_config, image_proj_stage_config, freeze_embedder=True, *args, **kwargs):
