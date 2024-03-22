@@ -695,10 +695,10 @@ class LatentDiffusion(DDPM):
         else:
             raise NotImplementedError()
 
-        if self.frame_cond:
-            ## [b,c,t,h,w]: only care about the predicted part (avoid disturbance)
-            model_output = model_output[:, :, self.frame_cond:, :, :]
-            target = target[:, :, self.frame_cond:, :, :]
+        # if self.frame_cond:
+        #     ## [b,c,t,h,w]: only care about the predicted part (avoid disturbance)
+        #     model_output = model_output[:, :, self.frame_cond:, :, :]
+        #     target = target[:, :, self.frame_cond:, :, :]
 
         loss_simple = self.get_loss(model_output, target, mean=False).mean([1, 2, 3, 4])
 
