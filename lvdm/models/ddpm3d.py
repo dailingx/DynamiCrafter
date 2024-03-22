@@ -678,11 +678,11 @@ class LatentDiffusion(DDPM):
     def p_losses(self, x_start, cond, t, noise=None, **kwargs):
         noise = default(noise, lambda: torch.randn_like(x_start))
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
-        if self.frame_cond:
-            if self.cond_mask.device is not self.device:
-                self.cond_mask = self.cond_mask.to(self.device)
-            ## condition on fist few frames
-            x_noisy = x_start * self.cond_mask + (1. - self.cond_mask) * x_noisy
+        # if self.frame_cond:
+        #     if self.cond_mask.device is not self.device:
+        #         self.cond_mask = self.cond_mask.to(self.device)
+        #     ## condition on fist few frames
+        #     x_noisy = x_start * self.cond_mask + (1. - self.cond_mask) * x_noisy
         model_output = self.apply_model(x_noisy, t, cond, **kwargs)
 
         loss_dict = {}
