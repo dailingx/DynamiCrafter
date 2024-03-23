@@ -683,6 +683,8 @@ class LatentDiffusion(DDPM):
         #         self.cond_mask = self.cond_mask.to(self.device)
         #     ## condition on fist few frames
         #     x_noisy = x_start * self.cond_mask + (1. - self.cond_mask) * x_noisy
+        # test
+        print(f'x_noisy: {x_noisy}, t: {t}, cond: {cond}')
         model_output = self.apply_model(x_noisy, t, cond, **kwargs)
 
         loss_dict = {}
