@@ -456,15 +456,9 @@ class LatentDiffusion(DDPM):
     
     def get_learned_conditioning(self, c):
         if self.cond_stage_forward is None:
-            # test
-            print(f'get_learned_conditioning cond_stage_forward not None')
             if hasattr(self.cond_stage_model, 'encode') and callable(self.cond_stage_model.encode):
-                # test
-                print(f'get_learned_conditioning can encode')
                 c = self.cond_stage_model.encode(c)
                 if isinstance(c, DiagonalGaussianDistribution):
-                    # test
-                    print(f'get_learned_conditioning can DiagonalGaussianDistribution')
                     c = c.mode()
             else:
                 c = self.cond_stage_model(c)
@@ -795,8 +789,6 @@ class LatentVisualDiffusion(LatentDiffusion):
         ## image/video shape: b, c, t, h, w
         data_key = 'jpg' if is_imgbatch else self.first_stage_key
         x = super().get_input(batch, data_key)
-        # test
-        print(f'get_batch_input is_imgbatch: {is_imgbatch}')
         if is_imgbatch:
             ## pack image as video
             # x = x[:,:,None,:,:]
@@ -808,9 +800,9 @@ class LatentVisualDiffusion(LatentDiffusion):
 
         ## get caption condition
         cond_key = 'txt' if is_imgbatch else self.cond_stage_key
-        # test
-        print(f'get_batch_input cond_key: {cond_key}, batch: {batch}')
         cond = batch[cond_key]
+        # test
+        print(f'get_batch_input cond: {cond}')
         if random_uncond and self.uncond_type == 'empty_seq':
             for i, ci in enumerate(cond):
                 if random.random() < self.uncond_prob:
