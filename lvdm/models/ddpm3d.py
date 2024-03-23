@@ -813,6 +813,8 @@ class LatentVisualDiffusion(LatentDiffusion):
                     cond_emb[i] = torch.zeros_like(ci)
 
         out = [z, cond_emb]
+        # test
+        print(f'get_batch_input out: {out}')
         ## optional output: self-reconst or caption
         if return_first_stage_outputs:
             # test
