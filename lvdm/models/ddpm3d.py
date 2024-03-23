@@ -802,11 +802,11 @@ class LatentVisualDiffusion(LatentDiffusion):
         cond_key = 'txt' if is_imgbatch else self.cond_stage_key
         cond = batch[cond_key]
         # test
-        print(f'get_batch_input cond: {cond}')
-        if random_uncond and self.uncond_type == 'empty_seq':
-            for i, ci in enumerate(cond):
-                if random.random() < self.uncond_prob:
-                    cond[i] = ""
+        print(f'get_batch_input cond: {cond}， random_uncond: {random_uncond}')
+        # if random_uncond and self.uncond_type == 'empty_seq':
+        #     for i, ci in enumerate(cond):
+        #         if random.random() < self.uncond_prob:
+        #             cond[i] = ""
         if isinstance(cond, dict) or isinstance(cond, list):
             cond_emb = self.get_learned_conditioning(cond)
         else:
