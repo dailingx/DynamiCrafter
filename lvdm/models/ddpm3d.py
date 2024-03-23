@@ -804,6 +804,8 @@ class LatentVisualDiffusion(LatentDiffusion):
                 if random.random() < self.uncond_prob:
                     cond[i] = ""
         if isinstance(cond, dict) or isinstance(cond, list):
+            # test
+            print(f'cond is: {cond}')
             cond_emb = self.get_learned_conditioning(cond)
         else:
             cond_emb = self.get_learned_conditioning(cond.to(self.device))
@@ -813,17 +815,11 @@ class LatentVisualDiffusion(LatentDiffusion):
                     cond_emb[i] = torch.zeros_like(ci)
 
         out = [z, cond_emb]
-        # test
-        print(f'get_batch_input out: {out}')
         ## optional output: self-reconst or caption
         if return_first_stage_outputs:
-            # test
-            print(f'return_first_stage_outputs')
             xrec = self.decode_first_stage(z)
             out.extend([x_ori, xrec])
         if return_original_cond:
-            # test
-            print(f'return_original_cond')
             out.append(cond)
 
         return out
