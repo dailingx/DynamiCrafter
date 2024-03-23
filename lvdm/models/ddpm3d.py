@@ -550,7 +550,7 @@ class LatentDiffusion(DDPM):
             cond = {key: cond}
 
         #test
-        print(f'apply_model cond: {cond}')
+        print(f'apply_model cond: {cond}, conditioning_key: {self.model.conditioning_key}')
         x_recon = self.model(x_noisy, t, **cond, **kwargs)
 
         if isinstance(x_recon, tuple):
