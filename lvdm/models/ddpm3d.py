@@ -549,6 +549,8 @@ class LatentDiffusion(DDPM):
             key = 'c_concat' if self.model.conditioning_key == 'concat' else 'c_crossattn'
             cond = {key: cond}
 
+        #test
+        print(f'apply_model cond: {cond}')
         x_recon = self.model(x_noisy, t, **cond, **kwargs)
 
         if isinstance(x_recon, tuple):
@@ -684,7 +686,7 @@ class LatentDiffusion(DDPM):
         #     ## condition on fist few frames
         #     x_noisy = x_start * self.cond_mask + (1. - self.cond_mask) * x_noisy
         # test
-        print(f'x_noisy: {x_noisy}, t: {t}, cond: {cond}')
+        print(f'x_noisy.shape: {x_noisy.shape}, t.shape: {t.shape}, cond.shape: {cond.shape}')
         model_output = self.apply_model(x_noisy, t, cond, **kwargs)
 
         loss_dict = {}
