@@ -812,7 +812,7 @@ class LatentVisualDiffusion(LatentDiffusion):
         else:
             cond_emb = self.get_learned_conditioning(cond.to(self.device))
         # test
-        print(f'get_batch_input cond_emb: {cond_emb}')
+        print(f'get_batch_input cond_emb.shape: {cond_emb.shape}')
         if random_uncond and self.uncond_type == 'zero_embed':
             for i, ci in enumerate(cond):
                 if random.random() < self.uncond_prob:
