@@ -308,7 +308,7 @@ class DDPM(pl.LightningModule):
         x = batch[k]
         # test
         print(f'get_input x: {x}, batch: {batch}')
-        x = x.to(memory_format=torch.contiguous_format).float()
+        # x = x.to(memory_format=torch.contiguous_format).float()
         return x
 
     def _get_rows_from_list(self, samples):
