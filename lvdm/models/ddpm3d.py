@@ -306,6 +306,8 @@ class DDPM(pl.LightningModule):
 
     def get_input(self, batch, k):
         x = batch[k]
+        # test
+        print(f'get_input x: {x}, batch: {batch}')
         x = x.to(memory_format=torch.contiguous_format).float()
         return x
 
