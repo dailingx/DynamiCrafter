@@ -551,8 +551,6 @@ class LatentDiffusion(DDPM):
             key = 'c_concat' if self.model.conditioning_key == 'concat' else 'c_crossattn'
             cond = {key: cond}
 
-        #test
-        print(f'apply_model cond: {cond}, conditioning_key: {self.model.conditioning_key}')
         x_recon = self.model(x_noisy, t, **cond, **kwargs)
 
         if isinstance(x_recon, tuple):
@@ -779,7 +777,8 @@ class LatentVisualDiffusion(LatentDiffusion):
         else:
             pass
 
-        x, c = self.get_batch_input(batch, random_uncond=random_uncond, is_imgbatch=is_imgbatch)
+        # x, c = self.get_batch_input(batch, random_uncond=random_uncond, is_imgbatch=is_imgbatch)
+        x, c = self.get_input(batch, self.first_stage_key)
         loss, loss_dict = self(x, c, is_imgbatch=is_imgbatch, **kwargs)
         return loss, loss_dict
 
@@ -826,6 +825,41 @@ class LatentVisualDiffusion(LatentDiffusion):
         if return_original_cond:
             out.append(cond)
 
+        return out
+
+    def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
+                  cond_key=None, return_original_cond=False, bs=None, uncond=0.05):
+        x = super().get_input(batch, k)
+        if bs is not None:
+            x = x[:bs]
+        x = x.to(self.device)
+        encoder_posterior = self.encode_first_stage(x)
+        z = self.get_first_stage_encoding(encoder_posterior).detach()
+        cond_key = cond_key or self.cond_stage_key
+        xc = super().get_input(batch, cond_key)
+        if bs is not None:
+            xc["c_crossattn"] = xc["c_crossattn"][:bs]
+            xc["c_concat"] = xc["c_concat"][:bs]
+        cond = {}
+
+        # To support classifier-free guidance, randomly drop out only text conditioning 5%, only image conditioning 5%, and both 5%.
+        random = torch.rand(x.size(0), device=x.device)
+        prompt_mask = rearrange(random < 2 * uncond, "n -> n 1 1")
+        input_mask = 1 - rearrange((random >= uncond).float() * (random < 3 * uncond).float(), "n -> n 1 1 1")
+
+        null_prompt = self.get_learned_conditioning([""])
+        cond["c_crossattn"] = [
+            torch.where(prompt_mask, null_prompt, self.get_learned_conditioning(xc["c_crossattn"]).detach())]
+        cond["c_concat"] = [input_mask * self.encode_first_stage((xc["c_concat"].to(self.device))).mode().detach()]
+
+        out = [z, cond]
+        if return_first_stage_outputs:
+            xrec = self.decode_first_stage(z)
+            out.extend([x, xrec])
+        if return_original_cond:
+            out.append(xc)
+        # test
+        print(f'get_input out: {out}')
         return out
 
     def configure_optimizers(self):
