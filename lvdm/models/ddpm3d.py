@@ -833,6 +833,8 @@ class LatentVisualDiffusion(LatentDiffusion):
 
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
                   cond_key=None, return_original_cond=False, bs=None, uncond=0.05):
+        # dict(edited=image_1, edit=dict(c_concat=image_0, c_crossattn=prompt))
+        # first：edited， cond： edit
         x = super().get_input(batch, k)
         if bs is not None:
             x = x[:bs]
@@ -853,7 +855,7 @@ class LatentVisualDiffusion(LatentDiffusion):
 
         null_prompt = self.get_learned_conditioning([""])
         cond["c_crossattn"] = [
-            torch.where(prompt_mask, null_prompt, self.get_learned_conditioning(xc["c_crossattn"]).detach())]
+            torch.where(prompt_mask, null_prompt, self.get_learned_conditioning('prompt_xxx').detach())]
         cond["c_concat"] = [input_mask * self.encode_first_stage((xc["c_concat"].to(self.device))).mode().detach()]
 
         # text_emb = self.get_learned_conditioning([""])
