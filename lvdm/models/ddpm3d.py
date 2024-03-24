@@ -308,7 +308,9 @@ class DDPM(pl.LightningModule):
         x = batch[k]
         # test
         print(f'get_input x: {x}, batch: {batch}')
-        x = x.to(memory_format=torch.contiguous_format).float()
+        # batch的值是{video: tenxxx, caption: ['xxx']} 当取到caption时会报错
+        # AttributeError: 'list' object has no attribute 'to'
+        # x = x.to(memory_format=torch.contiguous_format).float()
         return x
 
     def _get_rows_from_list(self, samples):
