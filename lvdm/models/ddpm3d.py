@@ -308,7 +308,7 @@ class DDPM(pl.LightningModule):
         x = batch[k]
         # test
         print(f'get_input x: {x}, batch: {batch}')
-        # x = x.to(memory_format=torch.contiguous_format).float()
+        x = x.to(memory_format=torch.contiguous_format).float()
         return x
 
     def _get_rows_from_list(self, samples):
@@ -853,6 +853,26 @@ class LatentVisualDiffusion(LatentDiffusion):
         cond["c_crossattn"] = [
             torch.where(prompt_mask, null_prompt, self.get_learned_conditioning(xc["c_crossattn"]).detach())]
         cond["c_concat"] = [input_mask * self.encode_first_stage((xc["c_concat"].to(self.device))).mode().detach()]
+
+        # text_emb = self.get_learned_conditioning([""])
+        # # img cond
+        # img_tensor = torch.from_numpy(image).permute(2, 0, 1).float().to(model.device)
+        # img_tensor = (img_tensor / 255. - 0.5) * 2
+        #
+        # image_tensor_resized = transform(img_tensor)  # 3,h,w
+        # videos = image_tensor_resized.unsqueeze(0)  # bchw
+        #
+        # z = get_latent_z(model, videos.unsqueeze(2))  # bc,1,hw
+        #
+        # img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=frames)
+        #
+        # cond_images = model.embedder(img_tensor.unsqueeze(0))  ## blc
+        # img_emb = model.image_proj_model(cond_images)
+        #
+        # imtext_cond = torch.cat([text_emb, img_emb], dim=1)
+        #
+        # fs = torch.tensor([fs], dtype=torch.long, device=model.device)
+        # cond = {"c_crossattn": [imtext_cond], "fs": fs, "c_concat": [img_tensor_repeat]}
 
         out = [z, cond]
         if return_first_stage_outputs:
