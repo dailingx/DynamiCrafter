@@ -74,7 +74,7 @@ class Taichi(Dataset):
 
         num_frames = frames.shape[0]
         # test
-        print(f'num_frames: {num_frames}')
+        print(f'num_frames: {num_frames}, frames: {frames}')
         random_frame_index = random.randint(0, num_frames - 1)
         random_frame = frames[random_frame_index]
 
