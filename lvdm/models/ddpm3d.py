@@ -861,6 +861,8 @@ class LatentVisualDiffusion(LatentDiffusion):
         text_emb = self.get_learned_conditioning([""])
         # img cond
         random_frame = batch['random_frame']
+        # test
+        print(f'get_input random_frame.shape: {random_frame.shape}')
         img_tensor = random_frame.permute(2, 0, 1).float().to(self.device)
         img_tensor = (img_tensor / 255. - 0.5) * 2
         #
