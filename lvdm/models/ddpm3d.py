@@ -848,20 +848,21 @@ class LatentVisualDiffusion(LatentDiffusion):
             xc["c_concat"] = xc["c_concat"][:bs]
         cond = {}
 
-        # To support classifier-free guidance, randomly drop out only text conditioning 5%, only image conditioning 5%, and both 5%.
-        random = torch.rand(x.size(0), device=x.device)
-        prompt_mask = rearrange(random < 2 * uncond, "n -> n 1 1")
-        input_mask = 1 - rearrange((random >= uncond).float() * (random < 3 * uncond).float(), "n -> n 1 1 1")
+        # # To support classifier-free guidance, randomly drop out only text conditioning 5%, only image conditioning 5%, and both 5%.
+        # random = torch.rand(x.size(0), device=x.device)
+        # prompt_mask = rearrange(random < 2 * uncond, "n -> n 1 1")
+        # input_mask = 1 - rearrange((random >= uncond).float() * (random < 3 * uncond).float(), "n -> n 1 1 1")
+        #
+        # null_prompt = self.get_learned_conditioning([""])
+        # cond["c_crossattn"] = [
+        #     torch.where(prompt_mask, null_prompt, self.get_learned_conditioning('prompt_xxx').detach())]
+        # cond["c_concat"] = [input_mask * self.encode_first_stage((xc["c_concat"].to(self.device))).mode().detach()]
 
-        null_prompt = self.get_learned_conditioning([""])
-        cond["c_crossattn"] = [
-            torch.where(prompt_mask, null_prompt, self.get_learned_conditioning('prompt_xxx').detach())]
-        cond["c_concat"] = [input_mask * self.encode_first_stage((xc["c_concat"].to(self.device))).mode().detach()]
-
-        # text_emb = self.get_learned_conditioning([""])
-        # # img cond
-        # img_tensor = torch.from_numpy(image).permute(2, 0, 1).float().to(model.device)
-        # img_tensor = (img_tensor / 255. - 0.5) * 2
+        text_emb = self.get_learned_conditioning([""])
+        # img cond
+        random_frame = batch['random_frame']
+        img_tensor = random_frame.permute(2, 0, 1).float().to(self.device)
+        img_tensor = (img_tensor / 255. - 0.5) * 2
         #
         # image_tensor_resized = transform(img_tensor)  # 3,h,w
         # videos = image_tensor_resized.unsqueeze(0)  # bchw
@@ -870,13 +871,12 @@ class LatentVisualDiffusion(LatentDiffusion):
         #
         # img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=frames)
         #
-        # cond_images = model.embedder(img_tensor.unsqueeze(0))  ## blc
-        # img_emb = model.image_proj_model(cond_images)
-        #
-        # imtext_cond = torch.cat([text_emb, img_emb], dim=1)
-        #
-        # fs = torch.tensor([fs], dtype=torch.long, device=model.device)
-        # cond = {"c_crossattn": [imtext_cond], "fs": fs, "c_concat": [img_tensor_repeat]}
+        cond_images = self.embedder(img_tensor.unsqueeze(0))  ## blc
+        img_emb = self.image_proj_model(cond_images)
+
+        imtext_cond = torch.cat([text_emb, img_emb], dim=1)
+
+        cond = {"c_crossattn": [imtext_cond], "c_concat": [img_tensor]}
 
         out = [z, cond]
         if return_first_stage_outputs:
