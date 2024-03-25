@@ -74,9 +74,9 @@ class Taichi(Dataset):
 
         num_frames = frames.shape[0]
         # test
-        print(f'num_frames: {num_frames}, frames: {frames}')
+        print(f'num_frames: {num_frames}')
         random_frame_index = random.randint(0, num_frames - 1)
-        random_frame = frames[random_frame_index]
+        random_frame = frames.asnumpy()[random_frame_index]
 
         frames = torch.tensor(frames.asnumpy()).permute(3, 0, 1, 2).float() # [t,h,w,c] -> [c,t,h,w]
         assert(frames.shape[2] == self.resolution[0] and frames.shape[3] == self.resolution[1]), f'frames={frames.shape}, self.resolution={self.resolution}'
