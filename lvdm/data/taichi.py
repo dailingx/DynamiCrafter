@@ -72,7 +72,7 @@ class Taichi(Dataset):
         frames = video_reader.get_batch(frame_indices)
         assert(frames.shape[0] == self.video_length),f'{len(frames)}, self.video_length={self.video_length}'
 
-        num_frames = frames.shape(0)
+        num_frames = frames.shape[0]
         # test
         print(f'num_frames: {num_frames}')
         random_frame_index = random.randint(0, num_frames - 1)
