@@ -73,10 +73,10 @@ class Taichi(Dataset):
         assert(frames.shape[0] == self.video_length),f'{len(frames)}, self.video_length={self.video_length}'
 
         num_frames = frames.shape[0]
-        # test
-        print(f'num_frames: {num_frames}')
         random_frame_index = random.randint(0, num_frames - 1)
         random_frame = frames.asnumpy()[random_frame_index]
+        # test
+        print(f'random_frame.shape: {random_frame.shape}')
 
         frames = torch.tensor(frames.asnumpy()).permute(3, 0, 1, 2).float() # [t,h,w,c] -> [c,t,h,w]
         assert(frames.shape[2] == self.resolution[0] and frames.shape[3] == self.resolution[1]), f'frames={frames.shape}, self.resolution={self.resolution}'
