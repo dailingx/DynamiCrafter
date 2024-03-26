@@ -836,6 +836,7 @@ class LatentVisualDiffusion(LatentDiffusion):
         # dict(edited=image_1, edit=dict(c_concat=image_0, c_crossattn=prompt))
         # first：edited， cond： edit
         random_frame = batch['random_frame']
+        random_frame_copy = random_frame.clone()
         # test
         print(f'get_input begin random_frame.shape: {random_frame.shape}')
         x = super().get_input(batch, k)
@@ -863,9 +864,7 @@ class LatentVisualDiffusion(LatentDiffusion):
 
         text_emb = self.get_learned_conditioning([""])
         # img cond
-        # test
-        print(f'get_input random_frame.shape: {random_frame.shape}')
-        img_tensor = random_frame.permute(2, 0, 1).float().to(self.device)
+        img_tensor = random_frame_copy.squeeze(0).permute(2, 0, 1).float().to(self.device)
         img_tensor = (img_tensor / 255. - 0.5) * 2
         #
         # image_tensor_resized = transform(img_tensor)  # 3,h,w
