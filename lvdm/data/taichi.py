@@ -74,7 +74,8 @@ class Taichi(Dataset):
 
         num_frames = frames.shape[0]
         random_frame_index = random.randint(0, num_frames - 1)
-        random_frame = frames.asnumpy()[random_frame_index].clone().detach()
+        # random_frame = frames.asnumpy()[random_frame_index].clone().detach()
+        random_frame = frames[random_frame_index].copy()
         # test
         print(f'random_frame.shape: {random_frame.shape}')
 
