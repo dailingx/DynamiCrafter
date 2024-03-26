@@ -837,7 +837,7 @@ class LatentVisualDiffusion(LatentDiffusion):
         # first：edited， cond： edit
         random_frame = batch['random_frame']
         # test
-        print(f'get_input random_frame.shape: {random_frame.shape}')
+        print(f'get_input begin random_frame.shape: {random_frame.shape}')
         x = super().get_input(batch, k)
         if bs is not None:
             x = x[:bs]
