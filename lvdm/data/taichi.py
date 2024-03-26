@@ -74,7 +74,11 @@ class Taichi(Dataset):
 
         num_frames = frames.shape[0]
         random_frame_index = random.randint(0, num_frames - 1)
-        random_frame = frames.asnumpy()[random_frame_index].copy()
+        # random_frame = frames.asnumpy()[random_frame_index].copy()
+        from mxnet import nd
+        random_frame_ndarray = nd.slice_axis(frames, axis=0, begin=random_frame_index, end=random_frame_index+1)
+        random_frame_ndarray = random_frame_ndarray.squeeze(axis=0)
+        random_frame = random_frame_ndarray.asnumpy()
         # test
         print(f'random_frame.shape: {random_frame.shape}')
 
