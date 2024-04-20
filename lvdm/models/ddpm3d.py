@@ -869,6 +869,7 @@ class LatentVisualDiffusion(LatentDiffusion):
         img_tensor = random_frame_copy.squeeze(0).permute(2, 0, 1).float().to(self.device)
         img_tensor = (img_tensor / 255. - 0.5) * 2
 
+        resolution = (512, 512)
         transform = transforms.Compose([
             transforms.Resize(min(self.resolution)),
             transforms.CenterCrop(self.resolution),
