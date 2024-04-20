@@ -59,21 +59,32 @@ class Image2Video():
             text_emb = model.get_learned_conditioning([prompt])
 
             # img cond
+            # 将一个NumPy数组image转换为PyTorch张量。改变张量的维度顺序，从(高, 宽, 通道数)变为(通道数, 高, 宽)，这是因为PyTorch处理图像数据时通常期望通道在前。
+            # 将张量的数据类型转换为浮点数。将张量移动到模型所在的设备上（例如CPU或GPU）。
             img_tensor = torch.from_numpy(image).permute(2, 0, 1).float().to(model.device)
+            # 将图像张量的像素值从[0, 255]归一化到[-1, 1]区间，这是一种常见的图像预处理步骤。
             img_tensor = (img_tensor / 255. - 0.5) * 2
 
+            # 应用一个预定义的transform函数或对象到图像张量上，可能进行了缩放、裁剪等操作，以适配模型的输入要求。
             image_tensor_resized = transform(img_tensor) #3,h,w
+            # 张量的第0维（批次维度）增加一个维度，将张量的形状从(通道数, 高, 宽)变为(1, 通道数, 高, 宽)，这样才能作为模型的一个批次输入。
             videos = image_tensor_resized.unsqueeze(0) # bchw
-            
+
+            # 在张量的第2维（时间维度）增加一个维度，然后调用get_latent_z函数或方法，该函数可能是为了获取视频或图像的潜在表示
             z = get_latent_z(model, videos.unsqueeze(2)) #bc,1,hw
-            
+
+            # 使用repeat函数复制z张量中的时间维度t，以匹配所需的帧数frames。这可能是为了调整潜在表示的时间维度，以适应后续处理。
             img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=frames)
 
+            # 再次在图像张量的批次维度上增加一个维度，并通过模型的embedder来获取其嵌入表示。
             cond_images = model.embedder(img_tensor.unsqueeze(0)) ## blc
+            # 将图像嵌入cond_images通过另一个模型或模型的一部分image_proj_model进行处理，可能是为了进一步投影或编码图像信息。
             img_emb = model.image_proj_model(cond_images)
 
+            # 将文本嵌入text_emb和图像嵌入img_emb沿着第1维（特征维度）拼接起来，构成一个联合嵌入表示。
             imtext_cond = torch.cat([text_emb, img_emb], dim=1)
 
+            # 创建一个包含某些值（fs）的张量，并指定类型为长整型，同时将该张量移动到模型所在的设备上。
             fs = torch.tensor([fs], dtype=torch.long, device=model.device)
             cond = {"c_crossattn": [imtext_cond], "fs": fs, "c_concat": [img_tensor_repeat]}
             
