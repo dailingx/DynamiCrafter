@@ -29,6 +29,8 @@ from lvdm.common import (
     default
 )
 import random
+import torchvision.transforms as transforms
+from scripts.evaluation.funcs import get_latent_z
 
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
@@ -866,22 +868,24 @@ class LatentVisualDiffusion(LatentDiffusion):
         # img cond
         img_tensor = random_frame_copy.squeeze(0).permute(2, 0, 1).float().to(self.device)
         img_tensor = (img_tensor / 255. - 0.5) * 2
-        #
-        # image_tensor_resized = transform(img_tensor)  # 3,h,w
-        # videos = image_tensor_resized.unsqueeze(0)  # bchw
-        #
-        # z = get_latent_z(model, videos.unsqueeze(2))  # bc,1,hw
-        #
-        # img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=frames)
-        #
+
+        transform = transforms.Compose([
+            transforms.Resize(min(self.resolution)),
+            transforms.CenterCrop(self.resolution),
+        ])
+        image_tensor_resized = transform(img_tensor)  # 3,h,w
+        videos = image_tensor_resized.unsqueeze(0)  # bchw
+        z = get_latent_z(self.model, videos.unsqueeze(2))  # bc,1,hw
+        img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=16)
+
         cond_images = self.embedder(img_tensor.unsqueeze(0))  ## blc
         img_emb = self.image_proj_model(cond_images)
 
         imtext_cond = torch.cat([text_emb, img_emb], dim=1)
 
         # test
-        print(f'c_concat img_tensor shape: {img_tensor.shape}')
-        cond = {"c_crossattn": [imtext_cond], "c_concat": [img_tensor]}
+        print(f'c_concat img_tensor_repeat shape: {img_tensor_repeat.shape}')
+        cond = {"c_crossattn": [imtext_cond], "c_concat": [img_tensor_repeat]}
 
         out = [z, cond]
         if return_first_stage_outputs:
