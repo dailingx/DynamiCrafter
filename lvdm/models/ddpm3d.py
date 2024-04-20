@@ -871,8 +871,8 @@ class LatentVisualDiffusion(LatentDiffusion):
 
         resolution = (512, 512)
         transform = transforms.Compose([
-            transforms.Resize(min(self.resolution)),
-            transforms.CenterCrop(self.resolution),
+            transforms.Resize(min(resolution)),
+            transforms.CenterCrop(resolution),
         ])
         image_tensor_resized = transform(img_tensor)  # 3,h,w
         videos = image_tensor_resized.unsqueeze(0)  # bchw
