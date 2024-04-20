@@ -879,6 +879,8 @@ class LatentVisualDiffusion(LatentDiffusion):
 
         imtext_cond = torch.cat([text_emb, img_emb], dim=1)
 
+        # test
+        print(f'c_concat img_tensor shape: {img_tensor.shape}')
         cond = {"c_crossattn": [imtext_cond], "c_concat": [img_tensor]}
 
         out = [z, cond]
@@ -944,9 +946,6 @@ class DiffusionWrapper(pl.LightningModule):
             out = self.diffusion_model(x, t, context=cc, **kwargs)
         elif self.conditioning_key == 'hybrid':
             ## it is just right [b,c,t,h,w]: concatenate in channel dim
-            # test
-            for i, c in enumerate(c_concat):
-                print(f'c_concat shape: {c.shape}, this index: {i}')
             xc = torch.cat([x] + c_concat, dim=1)
             cc = torch.cat(c_crossattn, 1)
             out = self.diffusion_model(xc, t, context=cc, **kwargs)
