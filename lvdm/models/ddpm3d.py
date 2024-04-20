@@ -556,7 +556,7 @@ class LatentDiffusion(DDPM):
             cond = {key: cond}
 
         # test
-        print(f'apply_model cond: {cond}')
+        print(f'apply_model c_concat.shape: {cond["c_concat"].shape}')
         x_recon = self.model(x_noisy, t, **cond, **kwargs)
 
         if isinstance(x_recon, tuple):
