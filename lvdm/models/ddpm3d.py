@@ -951,6 +951,10 @@ class DiffusionWrapper(pl.LightningModule):
             out = self.diffusion_model(x, t, context=cc, **kwargs)
         elif self.conditioning_key == 'hybrid':
             ## it is just right [b,c,t,h,w]: concatenate in channel dim
+            # test
+            print(f'x.shape: {x.shape}')
+            for tensor in c_concat:
+                print(f'c_concat shape: {tensor.shape}')
             xc = torch.cat([x] + c_concat, dim=1)
             cc = torch.cat(c_crossattn, 1)
             out = self.diffusion_model(xc, t, context=cc, **kwargs)
