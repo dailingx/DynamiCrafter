@@ -360,6 +360,21 @@ class DDPM(pl.LightningModule):
                 return {key: log[key] for key in return_keys}
         return log
 
+    def get_loss(self, pred, target, mean=True):
+        if self.loss_type == 'l1':
+            loss = (target - pred).abs()
+            if mean:
+                loss = loss.mean()
+        elif self.loss_type == 'l2':
+            if mean:
+                loss = torch.nn.functional.mse_loss(target, pred)
+            else:
+                loss = torch.nn.functional.mse_loss(target, pred, reduction='none')
+        else:
+            raise NotImplementedError("unknown loss type '{loss_type}'")
+
+        return loss
+
 
 class LatentDiffusion(DDPM):
     """main class"""
@@ -776,6 +791,8 @@ class LatentDiffusion(DDPM):
     #     loss_dict.update({f'{log_prefix}/loss': loss})
     #
     #     return loss, loss_dict
+
+
 
 
 class LatentVisualDiffusion(LatentDiffusion):
