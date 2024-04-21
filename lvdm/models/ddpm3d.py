@@ -877,7 +877,7 @@ class LatentVisualDiffusion(LatentDiffusion):
         image_tensor_resized = transform(img_tensor)  # 3,h,w
         videos = image_tensor_resized.unsqueeze(0)  # bchw
         z = get_latent_z(self, videos.unsqueeze(2))  # bc,1,hw
-        img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=16)
+        img_tensor_repeat = repeat(z, 'b c t h w -> b c (repeat t) h w', repeat=1)
 
         cond_images = self.embedder(img_tensor.unsqueeze(0))  ## blc
         img_emb = self.image_proj_model(cond_images)
