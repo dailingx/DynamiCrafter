@@ -1,4 +1,5 @@
 model:
+  base_learning_rate: 6.0e-05
   target: lvdm.models.ddpm3d.LatentVisualDiffusion
   params:
     rescale_betas_zero_snr: True
