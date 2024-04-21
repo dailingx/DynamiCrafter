@@ -317,6 +317,8 @@ def run_inference(opt, unknown):
         # configure learning rate
         if "batch_size" in config.data.params:
             bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
+            # test
+            print(f'base_learning_rate is: {base_lr}')
         else:
             bs, base_lr = (
                 config.data.params.train.loader.batch_size,
