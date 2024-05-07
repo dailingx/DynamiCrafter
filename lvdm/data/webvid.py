@@ -70,7 +70,7 @@ class WebVid(Dataset):
             self.spatial_transform = None
                 
     def _load_metadata(self):
-        metadata = pd.read_csv(self.meta_path)
+        metadata = pd.read_csv(self.meta_path, dtype=str)
         print(f'>>> {len(metadata)} data samples loaded.')
         if self.subsample is not None:
             metadata = metadata.sample(self.subsample, random_state=0)
@@ -81,7 +81,7 @@ class WebVid(Dataset):
         self.metadata.dropna(inplace=True)
 
     def _get_video_path(self, sample):
-        rel_video_fp = os.path.join(str(sample['page_dir']), str(sample['videoid']) + '.mp4')
+        rel_video_fp = os.path.join(sample['page_dir'], str(sample['videoid']) + '.mp4')
         full_video_fp = os.path.join(self.data_dir, 'videos', rel_video_fp)
         return full_video_fp
     
