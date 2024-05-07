@@ -81,7 +81,7 @@ class WebVid(Dataset):
         self.metadata.dropna(inplace=True)
 
     def _get_video_path(self, sample):
-        rel_video_fp = os.path.join(sample['page_dir'], str(sample['videoid']) + '.mp4')
+        rel_video_fp = os.path.join(str(sample['page_dir']), str(sample['videoid']) + '.mp4')
         full_video_fp = os.path.join(self.data_dir, 'videos', rel_video_fp)
         return full_video_fp
     
